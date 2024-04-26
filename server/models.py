@@ -24,7 +24,10 @@ class Author(db.Model, SerializerMixin):
     books = db.relationship("Book", back_populates="author", cascade="all, delete")
     publishers = association_proxy("book", "publisher")
 
-    serialize_rules = ("-books.author", "-publishers.authors")
+    serialize_rules = (
+        "-books.author",
+        "-publishers.authors",
+    )
 
     def __repr__(self):
         return f"<Author id={self.id} name={self.name} pen_name={self.pen_name} />"
@@ -37,7 +40,7 @@ class Publisher(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     founding_year = db.Column(db.Integer, nullable=False)
 
-    serialize_rules = "-books.publisher"
+    serialize_rules = ("-books.publisher",)
 
     books = db.relationship("Book", back_populates="publisher")
     authors = association_proxy("books", "author")
@@ -67,7 +70,19 @@ class Book(db.Model, SerializerMixin):
         "Publisher", cascade="all,delete", back_populates="books"
     )
 
-    serialize_rules = ("-author.books", "-publisher.books")
+    serialize_rules = (
+        "-author.books",
+        "-publisher.books",
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "page_count": self.page_count,
+            "author_name": self.author.name,
+            "publisher_name": self.publisher.name,
+        }
 
     @validates("page_count")
     def validates_pages(self, key, value):
